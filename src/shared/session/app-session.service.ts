@@ -7,7 +7,8 @@ import {
     TenantLoginInfoDto,
     UserLoginAttemptsInforDto,
     UserLoginAttemptsService,
-    UserLoginInfoDto
+    UserLoginInfoDto,
+    UserServiceProxy
 } from '@shared/service-proxies/service-proxies';
 import { AppConsts } from '@shared/AppConsts';
 import { finalize } from 'rxjs/operators';
@@ -26,6 +27,7 @@ export class AppSessionService {
         private _sessionService: SessionServiceProxy,
         private _utilsService: UtilsService,
         private _userLoginAttemptsService: UserLoginAttemptsService,
+        private _userService: UserServiceProxy,
         private _abpMultiTenancyService: AbpMultiTenancyService) {
     }
 
@@ -118,10 +120,16 @@ export class AppSessionService {
         return true;
     }
     private async logout(reload?: boolean){
-        abp.auth.clearToken();
-        abp.utils.deleteCookie(AppConsts.authorization.encryptedAuthTokenName);
-        if (reload !== false) {
-            location.href = AppConsts.appBaseUrl;
-        }
+        await this._userService
+        .updateLoginState(
+            this.userId
+        )
+        .subscribe((result) => {
+            abp.auth.clearToken();
+            abp.utils.deleteCookie(AppConsts.authorization.encryptedAuthTokenName);
+            if (reload !== false) {
+                location.href = AppConsts.appBaseUrl;
+            }
+        });
     }
 }

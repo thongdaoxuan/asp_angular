@@ -8,6 +8,7 @@ import {
     AuthenticateModel,
     AuthenticateResultModel,
     TokenAuthServiceProxy,
+    UserLoginAttemptsInforDto,
     UserLoginAttemptsService,
     UserServiceProxy,
 } from '@shared/service-proxies/service-proxies';
@@ -26,6 +27,7 @@ export class AppAuthService {
         private _tokenService: TokenService,
         private _userService: UserServiceProxy,
         private _logService: LogService,
+        private _userLoginAttemptsService: UserLoginAttemptsService,
         injector: Injector
     ) {
         this.clear();
@@ -47,6 +49,17 @@ export class AppAuthService {
     }
 
     authenticate(finallyCallback?: () => void): void {
+        this._userLoginAttemptsService
+        .getUserLoginAttempt(
+            this.authenticateModel.userNameOrEmailAddress
+        )
+        .subscribe((result: UserLoginAttemptsInforDto) => {
+            if(!!result && !!result.browserInfo && result.browserInfo != navigator.userAgent ){
+                console.log("browser errorr. logout-------------------!!!!!!!!!!!!!!!!!!!!!", result)
+                this.logout();
+                return false;
+            }
+        });
         finallyCallback = finallyCallback || (() => { });
       
         this._tokenAuthService
